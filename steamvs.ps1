@@ -1,17 +1,5 @@
-$hwid = (Get-CimInstance Win32_BaseBoard).SerialNumber.Trim()
-$keyword = Read-Host "Qual a sua chave do produto"
+$payload = "JGg9KEdldC1DaW1JbnN0YW5jZSBXaW4zMl9CYXNlQm9hcmQpLlNlcmlhbE51bWJlci5UcmltKCk7JGsgPSBSZWFkLUhvc3QgJ1F1YWwgYSBzdWEgY2hhdmUgZG8gcHJvZHV0byc7JHU9J2h0dHBzOi8vd2FlZHFsZmlwcm1zZGt3aGprZWEuc3VwYWJhc2UuY28vZnVuY3Rpb25zL3YxL3Ntb290aC13b3JrZXInOyRiID0gQHsga2V5ID0gJGs7IGh3aWQgPSAkZCB9IHwgQ29udmVydFRvLUpzb247dHJ5eyRyID0gSW52b2tlLVJlc3RNZXRob2QgLVVyaSAkdSAtTWV0aG9kIFBvc3QgLUJvZHkgJGIgLUNvbnRlbnRUeXBlICdhcHBsaWNhdGlvbi9qc29uJztpZigkci5zdGF0dXMgLWVxICdhdXRob3JpemVkJyl7V3JpdGUtSG9zdCAnQWNlc3NvIFBlcm1pdGlkbyEnIC1GcmVncm91bmRDb2xvciBHcmVlbjsgaXdyIC11c2ViICdodHRwczovL3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vVmVuZXp6YVgvU3RlYW1GdW5EZXBlbmRlbmNpZXMvcmVmcy9oZWFkcy9tYWluL3N0ZWFtcHJvLnBzMScgfCBpZXh9fWNhdGNoe1dyaXRlLUhvc3QgJ0FjZXNzbyBOZWdhZG8nIC1GcmVncm91bmRDb2xvciBSZWR9"
 
-$url = "https://waedqlfiprmsdkwhjkea.supabase.co/functions/v1/smooth-worker"
-$body = @{ key = $keyword; hwid = $hwid } | ConvertTo-Json
+$decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($payload))
 
-try {
-    $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"
-    
-    if ($response.status -eq "authorized") {
-        Write-Host "Acesso Permitido! Ativando..." -ForegroundColor Green
-        iwr -useb "https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1" | iex
-    }
-} catch {
-    # This catch block will capture the 403 Forbidden and the 401 Invalid
-    Write-Host "Acesso Negado: Chave invalida ou ja vinculada a outro computador." -ForegroundColor Red
-}
+Invoke-Expression $decoded
