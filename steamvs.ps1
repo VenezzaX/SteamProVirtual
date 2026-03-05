@@ -1,1 +1,17 @@
-powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand JABoAHcAaQBkACAAPQAgACgARwBlAHQALQBDAGkAbQBJAG4AcwB0AGEAbgBjAGUAIABXAGkAbgAzADIALQBCAAYQBzAGUAQgBvAGEAcgBkACkALgBTAGUAcgBpAGEAbABOAHUAbQBiAGUAcgAuAFQAcgBpAG0AKAApAC0AIAAkAGsAZQB5AHcAbwByAGQAIAA9ACAAUgBlAGEAZAAtAEgAbwBzAHQAIAAiAFEAdQBhAGwAIABhACAAcwB1AGEAIABjAGgAYQB2AGUAIABkAG8AIABwAHIAbwBkAHUAdABvACIALQAgACQAdQByAGwAIAA9ACAAIgBoAHQAdABwAHMAOgAvAC8AdwBhAGUAZABxAGwAZgBpAHAAcgBtAHMAZABrAHcAaABqAGsAZQBhAC4AcwB1AHAAYQBiAGEAcwBlAC4AYwBvAC8AZgB1AG4AYwB0AGkAbwBuAHMALwB2ADEALwBzAG0AbwBvAHQAaAAtAHcAbwByAGsAZQByACIALQAgACQAYgBvAGQAeQAgAD0AIAAQAHsAIABrAGUAeQAgAD0AIAAkAGsAZQB5AHcAbwByAGQADAAgAGgAdwBpAGQAIAA9ACAAJABoAHcAaQBkACAAfQAgAHwAIABDAG8AbgB2AGUAcgB0AFQAbwAtAEoAcwBvAG4ALQAgAHQAcgB5ACAAewAgACQAcgBlAHMAAABvAG4AcwBlACAAPQAgAEkAbgB2AG8AawBlAC0AUgBlAHMAdABMAGUAdABoAG8AZAAgAC0AVQByAGkAIAAkAHUAcgBsACAALQBNAGUAdABoAG8AZAAgAFAAbwBzAHQAIAAtAEIAbwBkAHkAIAAkAGIAbwBkAHkAIAAtAEMAbwBuAHQAZQBuAHQAVAB5AHAAZQAgACIAYQBwAHAAbABpAGMAYQB0AGkAbwBuAC8AagBzAG8AbgAiAC0AIABpAGYAIAAoACQAcgBlAHMAAABvAG4AcwBlAC4AcwB0AGEAdAB1AHMAIAAtAGUAcQAgACIAYQB1AHQAaABvAHIAaQB6AGUAZAAiACkAIAB7ACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAQQBjAGUAcwBzAG8AIABQAGUAcgBtAGkAdABpAGQAbwAhACAAQQB0AGkAdgBhAG4AZABvAC4ALgAuACIAIAAtAEYAbwByAGUAZwByAG8AdQBuAGQAQwBvAGwAbwByACAARwByAGUAZQBuAC0AIABpAHcAcgAgAC0AdQBzAGUAYgAgACIAaAB0AHQAcABzADoALwAvAHIAYQB3AC4AZwBpAHQAaAB1AGIA
+$hwid = (Get-CimInstance Win32_BaseBoard).SerialNumber.Trim()
+$keyword = Read-Host "Qual a sua chave do produto"
+
+$url = "https://waedqlfiprmsdkwhjkea.supabase.co/functions/v1/smooth-worker"
+$body = @{ key = $keyword; hwid = $hwid } | ConvertTo-Json
+
+try {
+    $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"
+    
+    if ($response.status -eq "authorized") {
+        Write-Host "Acesso Permitido! Ativando..." -ForegroundColor Green
+        iwr -useb "https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1" | iex
+    }
+} catch {
+    # This catch block will capture the 403 Forbidden and the 401 Invalid
+    Write-Host "Acesso Negado: Chave invalida ou ja vinculada a outro computador." -ForegroundColor Red
+}
