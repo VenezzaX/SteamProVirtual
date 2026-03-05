@@ -9,7 +9,6 @@ $body = @{
 } | ConvertTo-Json
 
 try {
-    # No headers needed now!
     $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"
     
     if ($response.status -eq "authorized") {
@@ -19,5 +18,5 @@ try {
         Write-Host "Acesso Negado: Chave em uso ou invalida." -ForegroundColor Red
     }
 } catch {
-    Write-Host "Erro na validacao. Verifique sua conexao." -ForegroundColor Red
+    Write-Host "Erro na validacao." -ForegroundColor Red
 }
