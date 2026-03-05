@@ -13,10 +13,11 @@ try {
     
     if ($response.status -eq "authorized") {
         Write-Host "Acesso Permitido!" -ForegroundColor Green
+        # This is your actual script that runs after validation
         iwr -useb "https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1" | iex
     } else {
         Write-Host "Acesso Negado: Chave em uso ou invalida." -ForegroundColor Red
     }
 } catch {
-    Write-Host "Erro na validacao." -ForegroundColor Red
+    Write-Host "Erro na validacao" -ForegroundColor Red
 }
