@@ -1,7 +1,6 @@
 $hwid = (Get-CimInstance Win32_BaseBoard).SerialNumber.Trim()
 $keyword = Read-Host "Qual a sua chave do produto"
 
-# Your Supabase Function URL
 $url = "https://waedqlfiprmsdkwhjkea.supabase.co/functions/v1/smooth-worker"
 
 $body = @{
@@ -10,6 +9,7 @@ $body = @{
 } | ConvertTo-Json
 
 try {
+    # No headers needed now!
     $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"
     
     if ($response.status -eq "authorized") {
