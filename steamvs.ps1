@@ -50,5 +50,5 @@ try {
         [System.Windows.Forms.MessageBox]::Show("Chave inválida ou já vinculada a outro computador.", "Acesso Negado")
     }
 } catch {
-    [System.Windows.Forms.MessageBox]::Show("Erro de validação: Verifique sua chave ou conexão.`n`nDetalhe: $($_.Exception.Message)", "Erro")
+    [System.Windows.Forms.MessageBox]::Show("Erro ao validar: Verifique sua chave ou network.`n`nDetalhe: $($_.Exception.Message)", "Erro")
 }
