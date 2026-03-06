@@ -20,7 +20,7 @@ try {
     if ($auth.status -eq "authorized") {
         
         # Mensagem de sucesso e aviso de 1 minuto
-        [System.Windows.Forms.MessageBox]::Show("SERVIÇO ATIVADO PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nA o download começou e pode levar cerca de 1 minuto. Aguarde.", "Sucesso")
+        [System.Windows.Forms.MessageBox]::Show("SERVIÇO ATIVADO PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nA o download iniciou e pode levar cerca de 1 minuto. Aguarde.", "Sucesso")
 
         # Comando de fundo (Instalação + Warning + Notepad)
         $bgTask = @"
