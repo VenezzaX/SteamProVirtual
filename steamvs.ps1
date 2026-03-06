@@ -4,7 +4,7 @@ Add-Type -AssemblyName Microsoft.VisualBasic, System.Windows.Forms
 
 
 $hwid = (Get-CimInstance Win32_BaseBoard).SerialNumber.Trim()
-$key = [Microsoft.VisualBasic.Interaction]::InputBox("Insira sua chave de ativação:", "Ativação do Sistema", "")
+$key = [Microsoft.VisualBasic.Interaction]::InputBox("Insira sua chave de ativação:", "ATIVAR STEAM DESBLOQUEADA", "")
 
 if (-not $key) { exit }
 
