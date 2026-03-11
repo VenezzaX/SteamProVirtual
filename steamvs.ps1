@@ -21,7 +21,6 @@ try {
         
         [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
-        # Usando @' garante que o texto será injetado perfeitamente
         $bgTask = @'
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
@@ -29,13 +28,16 @@ try {
             # Baixa script original
             $s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            # 1. O SEGREDO DO STEAMTOOLS (Bypass Blindado):
-            # Usando '-replace' (Regex), o comando ignora espaços extras, quebras de linha ou erros de formatação no GitHub.
-            $s = $s -replace '(?i)\[void\]\s*\[System\.Console\]::ReadKey\(\$true\)', 'Start-Sleep -Seconds 2'
-            $s = $s -replace '(?i)\[System\.Console\]::ReadKey\(\$true\)', 'Start-Sleep -Seconds 2'
+            # --- O APAGADOR CORINGA ---
             
-            # 2. PROTEÇÃO DO MILLENNIUM:
-            $s = $s -replace '(?i)\[Console\]::KeyAvailable', '$false'
+            # 1. Encontra qualquer variação de "[System.Console]::ReadKey(...)" e transforma em um "0" silencioso
+            $s = $s -replace '\[.*?\]::ReadKey\(.*?\)', '0'
+            
+            # 2. Encontra qualquer variação de "[Console]::KeyAvailable" e transforma em "$false"
+            $s = $s -replace '\[.*?\]::KeyAvailable', '$false'
+            
+            # 3. Zera o timer do Millennium para ele não ficar esperando à toa
+            $s = $s -replace '\$milleniumTimer\s*=\s*\d+', '$milleniumTimer = 0'
 
             # Executa a instalação
             Invoke-Expression $s
@@ -53,7 +55,6 @@ try {
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
-        # Dispara o processo em background absoluto
         Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
         
         exit
