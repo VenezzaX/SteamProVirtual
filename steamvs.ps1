@@ -29,13 +29,13 @@ try {
             # Baixa script original
             $s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            # 1. O SEGREDO DO STEAMTOOLS: Troca o pedido de tecla por uma espera de 2 segundos.
-            # Assim o loop de 5 tentativas nativo do script continua funcionando sozinho.
-            $s = $s.Replace('[void][System.Console]::ReadKey($true)', 'Start-Sleep -Seconds 2')
+            # 1. O SEGREDO DO STEAMTOOLS (Bypass Blindado):
+            # Usando '-replace' (Regex), o comando ignora espaços extras, quebras de linha ou erros de formatação no GitHub.
+            $s = $s -replace '(?i)\[void\]\s*\[System\.Console\]::ReadKey\(\$true\)', 'Start-Sleep -Seconds 2'
+            $s = $s -replace '(?i)\[System\.Console\]::ReadKey\(\$true\)', 'Start-Sleep -Seconds 2'
             
-            # 2. PROTEÇÃO DO MILLENNIUM: Evita crash de "console inexistente" na hora de checar teclas.
-            # Mantém os 5 segundos originais de espera que vão rodar no automático.
-            $s = $s.Replace('[Console]::KeyAvailable', '$false')
+            # 2. PROTEÇÃO DO MILLENNIUM:
+            $s = $s -replace '(?i)\[Console\]::KeyAvailable', '$false'
 
             # Executa a instalação
             Invoke-Expression $s
