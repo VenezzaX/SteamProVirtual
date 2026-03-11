@@ -29,7 +29,7 @@ try {
         # Define o caminho do log na pasta Temp do Windows
         `$logPath = "`$env:TEMP\SteamAtivador_Log.txt"
         
-        # Inicia a gravação de TUDO que acontecer no PowerShell invisível
+        # Inicia a gravação
         Start-Transcript -Path `$logPath -Force
         
         try {
@@ -44,7 +44,9 @@ try {
             `$s = `$s -replace '\[void\]\s*\[System\.Console\]::ReadKey\([^)]*\)', ''
             `$s = `$s -replace '\[System\.Console\]::ReadKey\([^)]*\)', ''
             `$s = `$s -replace '\[Console\]::KeyAvailable', '`$false'
-            `$s = "taskkill /F /IM steam.exe /T 2> `$null; " + `$s
+            
+            # CORREÇÃO: Usando comando nativo do PowerShell em vez de Taskkill
+            `$s = "Stop-Process -Name steam -Force -ErrorAction SilentlyContinue; " + `$s
 
             Write-Output "Script modificado na memoria. Executando instalacao..."
             
@@ -63,7 +65,6 @@ try {
         } catch {
             Write-Error "ERRO FATAL DURANTE A EXECUÇÃO: `$(`$_.Exception.Message)"
         } finally {
-            # Encerra a gravação do log, independente de dar erro ou sucesso
             Stop-Transcript
         }
 "@
