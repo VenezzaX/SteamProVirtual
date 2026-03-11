@@ -27,35 +27,76 @@ try {
 try {
     $rawScript = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
 
-    # ✅ \ simples — here-string de aspas simples é 100% literal
+    # === METODO 1: LINHA POR LINHA ===
     $linhas = $rawScript -split '\r?\n'
-    $scriptLimpo = @()
+    $scriptLimpo = [System.Collections.Generic.List[string]]::new()
 
     foreach ($linha in $linhas) {
 
+        # Bloqueia qualquer variação de ReadKey
         if ($linha -match 'ReadKey') {
-            $scriptLimpo += 'Start-Sleep -Seconds 2'
+            $scriptLimpo.Add('Start-Sleep -Milliseconds 1')
             continue
         }
 
+        # Bloqueia KeyAvailable (usado em loops de espera)
         if ($linha -match 'KeyAvailable') {
-            $scriptLimpo += 'if ($false) {'
+            $scriptLimpo.Add('if ($false) {')
             continue
         }
 
-        # ✅ \s*= com \ simples
-        if ($linha -match 'milleniumTimer\s*=') {
-            $scriptLimpo += '$milleniumTimer = 0'
+        # Zera qualquer timer do Millennium (milleniumTimer ou millenniumTimer)
+        if ($linha -match 'mill[eo]niumTimer\s*=') {
+            $scriptLimpo.Add('$milleniumTimer = 0')
+            $scriptLimpo.Add('$millenniumTimer = 0')
             continue
         }
 
-        $scriptLimpo += $linha
+        # Bloqueia pause/read-host que possam causar travamento
+        if ($linha -match '^\s*Read-Host\s*$') {
+            $scriptLimpo.Add('Start-Sleep -Milliseconds 1')
+            continue
+        }
+
+        # Bloqueia Start-Sleep muito longos (acima de 10s) — substitui por 1s
+        if ($linha -match 'Start-Sleep\s+-Seconds\s+(\d+)') {
+            $segundos = [int]$Matches[1]
+            if ($segundos -gt 10) {
+                $scriptLimpo.Add('Start-Sleep -Seconds 1')
+                continue
+            }
+        }
+
+        $scriptLimpo.Add($linha)
     }
 
     $s = $scriptLimpo -join "`n"
 
+    # === METODO 2: REGEX GLOBAL COMO FALLBACK (caso algo tenha escapado) ===
+    # Qualquer [Algo]::ReadKey(...) vira um 0 silencioso
+    $s = [regex]::Replace($s, '\[[\w\.]+\]::ReadKey\([^)]*\)', '0')
+
+    # Qualquer [Algo]::KeyAvailable vira $false
+    $s = [regex]::Replace($s, '\[[\w\.]+\]::KeyAvailable', '$false')
+
+    # Zera timers com qualquer grafia
+    $s = [regex]::Replace($s, '\$mill[eo]niumTimer\s*=\s*\d+', '$milleniumTimer = 0')
+
+    # Qualquer while ($true) que dependa de KeyAvailable — mata o loop
+    $s = [regex]::Replace($s, 'while\s*\(\s*\[[\w\.]+\]::KeyAvailable', 'while ($false) { #')
+
+    # === METODO 3: SUBSTITUIÇÃO DIRETA DE STRINGS CONHECIDAS ===
+    $s = $s.Replace('[System.Console]::ReadKey($true)', '0')
+    $s = $s.Replace('[System.Console]::ReadKey()', '0')
+    $s = $s.Replace('[Console]::ReadKey($true)', '0')
+    $s = $s.Replace('[Console]::ReadKey()', '0')
+    $s = $s.Replace('[Console]::KeyAvailable', '$false')
+    $s = $s.Replace('[System.Console]::KeyAvailable', '$false')
+
+    # Executa o script limpo
     Invoke-Expression $s
 
+    # Baixa aviso e abre no notepad
     $wUrl = 'https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt'
     $path = "$env:TEMP\warning.txt"
     (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
