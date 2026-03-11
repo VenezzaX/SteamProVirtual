@@ -19,24 +19,33 @@ try {
 
     if ($auth.status -eq "authorized") {
         
-        # Mensagem de sucesso e aviso de 1 minuto
-        [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 minuto. Aguarde.", "Sucesso")
+        # Mensagem de sucesso
+        [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
         # Comando de fundo (Instalação + Warning + Notepad)
         $bgTask = @"
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         try {
-            # Baixa o script da Steam como texto
+            # Baixa o script da Steam original como texto
             `$s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            # --- O SEGREDO ESTÁ AQUI: MODIFICAR NA MEMÓRIA ---
-            # Remove a pausa do Steamtools
-            `$s = `$s.Replace('[void][System.Console]::ReadKey(`$true)', '')
+            # --- O SEGREDO ESTÁ AQUI: EDIÇÃO AVANÇADA NA MEMÓRIA ---
             
-            # Substitui a verificação de tecla do Millennium para $false (assim ele só aguarda os 5 segundos e segue)
-            `$s = `$s.Replace('[Console]::KeyAvailable', '`$false')
+            # 1. Zera o timer do Millennium (Muda a variavel de 5 para 0 segundos)
+            `$s = `$s -replace '\`$milleniumTimer\s*=\s*5', '`$milleniumTimer = 0'
             
-            # Agora executa o script já limpo, garantindo que não vai travar
+            # 2. Oblitera qualquer exigência de apertar tecla (ReadKey) ignorando espaços
+            `$s = `$s -replace '\[void\]\s*\[System\.Console\]::ReadKey\([^)]*\)', ''
+            `$s = `$s -replace '\[System\.Console\]::ReadKey\([^)]*\)', ''
+            
+            # 3. Engana o script para achar que NENHUMA tecla foi pressionada para cancelar
+            `$s = `$s -replace '\[Console\]::KeyAvailable', '`$false'
+            
+            # 4. GATILHO OCULTO: Força a Steam e seus sub-processos a fecharem! 
+            # Isso evita o erro de "Acesso Negado" que fazia o download pular a etapa.
+            `$s = "taskkill /F /IM steam.exe /T 2> `$null; " + `$s
+
+            # Agora executa o script modificado e implacável na memória
             Invoke-Expression `$s
 
             # Baixa o aviso e abre no notepad
@@ -47,10 +56,10 @@ try {
         } catch {}
 "@
 
-        # Conversão para Base64 para evitar erros de sintaxe no Windows
+        # Conversão para Base64 para execução limpa no background
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
-        # REMOVIDO o -CreateNoWindow para evitar o erro. O -WindowStyle Hidden já faz o trabalho.
+        # Inicia o processo totalmente oculto
         Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
         
         exit
