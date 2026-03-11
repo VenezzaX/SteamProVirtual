@@ -1,7 +1,7 @@
-# 1. Oculta a janela inicial (Console)
-$showWindow = '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'
-$type = Add-Type -MemberDefinition $showWindow -Name "Win32ShowWindow" -Namespace "Win32" -PassThru
-$type::ShowWindow((Get-Process -Id $PID).MainWindowHandle, 0)
+# 1. MODO DEBUG: Código de ocultação comentado para a janela inicial aparecer
+# $showWindow = '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'
+# $type = Add-Type -MemberDefinition $showWindow -Name "Win32ShowWindow" -Namespace "Win32" -PassThru
+# $type::ShowWindow((Get-Process -Id $PID).MainWindowHandle, 0)
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Add-Type -AssemblyName Microsoft.VisualBasic, System.Windows.Forms
@@ -19,60 +19,59 @@ try {
 
     if ($auth.status -eq "authorized") {
         
-        # Mensagem de sucesso
-        [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
+        [System.Windows.Forms.MessageBox]::Show("MODO DEBUG ATIVO.`nUma janela preta do PowerShell ficará aberta mostrando todo o processo.", "Aviso de Debug")
 
-        # Comando de fundo (Instalação + Log + Warning + Notepad)
+        # Comando de fundo agora feito para ser VISÍVEL
         $bgTask = @"
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
-        # Define o caminho do log
         `$logPath = "`$env:TEMP\SteamAtivador_Log.txt"
         Start-Transcript -Path `$logPath -Force
         
         try {
-            Write-Output "Fechando Steam para evitar bloqueio de arquivos (Acesso Negado)..."
+            Write-Host "----------------------------------------" -ForegroundColor Yellow
+            Write-Host "INICIANDO DEBUG DA INSTALAÇÃO" -ForegroundColor Yellow
+            Write-Host "----------------------------------------" -ForegroundColor Yellow
+            
+            Write-Host "Fechando Steam para evitar bloqueio de arquivos..." -ForegroundColor Cyan
             Stop-Process -Name steam -Force -ErrorAction SilentlyContinue
             Start-Sleep -Seconds 2
             
-            Write-Output "Baixando script original do GitHub..."
+            Write-Host "Baixando script original do GitHub..." -ForegroundColor Cyan
             `$s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            Write-Output "Aplicando injeções de memória (Bypass de Confirmação)..."
-            
-            # PATCH 1 (Steamtools): Troca o 'Aperte qualquer tecla' por um pause de 2 segundos.
-            # Isso é perfeito pois mantém as 5 retentativas nativas do script fluindo perfeitamente.
+            Write-Host "Aplicando injeções de memória (Bypass de Confirmação)..." -ForegroundColor Cyan
             `$s = `$s.Replace('[void][System.Console]::ReadKey(`$true)', 'Start-Sleep -Seconds 2')
-            
-            # PATCH 2 (Millennium): Zera o timer de 5 segundos
             `$s = `$s -replace '\`$milleniumTimer\s*=\s*5', '`$milleniumTimer = 0'
-            
-            # PATCH 3 (Millennium): Engana a checagem que verifica se o usuário cancelou a instalação
             `$s = `$s.Replace('[Console]::KeyAvailable', '`$false')
 
-            Write-Output "Executando script autônomo. Lidando com os cenários nativos..."
-            # O script agora vai rodar a lógica inteira sozinho. Se tiver a DLL, ele pula. Se não tiver, instala.
+            Write-Host "Executando script na memória..." -ForegroundColor Green
             Invoke-Expression `$s
 
-            Write-Output "Baixando aviso final..."
+            Write-Host "Baixando aviso final..." -ForegroundColor Cyan
             `$wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
             `$path = "`$env:TEMP\warning.txt"
             (New-Object System.Net.WebClient).DownloadFile(`$wUrl, `$path)
             Start-Process notepad.exe `$path
-            Write-Output "Processo finalizado com sucesso!"
+            Write-Host "Processo finalizado com sucesso!" -ForegroundColor Green
             
         } catch {
-            Write-Error "ERRO FATAL DURANTE A EXECUÇÃO: `$(`$_.Exception.Message)"
+            Write-Host "ERRO FATAL DURANTE A EXECUÇÃO: `$(`$_.Exception.Message)" -ForegroundColor Red
         } finally {
             Stop-Transcript
+            Write-Host "`n----------------------------------------" -ForegroundColor Yellow
+            Write-Host "FIM DA EXECUÇÃO. Analise os resultados acima." -ForegroundColor Yellow
+            Write-Host "Pressione qualquer tecla para fechar esta janela..." -ForegroundColor White
+            
+            # PAUSA PARA VOCÊ CONSEGUIR LER O CONSOLE
+            `$null = `$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
         }
 "@
 
-        # Conversão para Base64 para execução cega e limpa
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
-        # Inicia o processo totalmente oculto
-        Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
+        # MUDANÇA: Substituído '-WindowStyle Hidden' por '-WindowStyle Normal'
+        Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Normal", "-EncodedCommand", $encoded
         
         exit
 
