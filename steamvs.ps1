@@ -18,7 +18,7 @@ try {
         
         [System.Windows.Forms.MessageBox]::Show("MODO DEBUG ATIVO.`nUma janela preta do PowerShell ficará aberta.", "Aviso de Debug")
 
-        # Usando @' (aspas simples) o PowerShell não vai "engolir" nossas variáveis antes da hora!
+        # Usando @' (aspas simples) o PowerShell obedece o texto cegamente
         $bgTask = @'
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         
@@ -30,17 +30,17 @@ try {
             Write-Host "Baixando script original do GitHub..." -ForegroundColor Cyan
             $s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
             
-            Write-Host "Aplicando injeções de memória (Bypass de Confirmação)..." -ForegroundColor Cyan
+            Write-Host "Aplicando injeções de memória (Bypass Absoluto)..." -ForegroundColor Cyan
             
-            # Substituições feitas com Expressão Regular para garantir o Bypass
-            # 1. Transforma o ReadKey em uma pausa de 2 segundos (Simulando o usuário)
-            $s = $s -replace '\[void\]\[System\.Console\]::ReadKey\(\$true\)', 'Start-Sleep -Seconds 2'
+            # 1. Troca a pausa do Steamtools por um timer automático de 2 segundos
+            $s = $s.Replace('[void][System.Console]::ReadKey($true)', 'Start-Sleep -Seconds 2')
             
-            # 2. Transforma o tempo de espera do Millenium de 5 para 0
-            $s = $s -replace '\$milleniumTimer\s*=\s*5', '$milleniumTimer = 0'
+            # 2. Destrói o loop de contagem do Millenium (Muda de $i = $milleniumTimer para $i = -1)
+            # Como a condição é imediatamente falsa, ele pula a espera 100% das vezes e instala direto.
+            $s = $s.Replace('for ($i = $milleniumTimer; $i -ge 0; $i--)', 'for ($i = -1; $i -ge 0; $i--)')
             
-            # 3. Simula que nenhuma tecla foi apertada para não cancelar
-            $s = $s -replace '\[Console\]::KeyAvailable', '$false'
+            # 3. Garante que qualquer outra checagem de tecla seja ignorada
+            $s = $s.Replace('[Console]::KeyAvailable', '$false')
 
             Write-Host "Executando script na memória..." -ForegroundColor Green
             Invoke-Expression $s
@@ -62,6 +62,8 @@ try {
 '@
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
+        
+        # MUDANÇA: Substituído '-WindowStyle Hidden' por '-WindowStyle Normal'
         Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Normal", "-EncodedCommand", $encoded
         exit
 
